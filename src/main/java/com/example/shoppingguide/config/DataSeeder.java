@@ -30,18 +30,17 @@ public class DataSeeder implements CommandLineRunner {
             System.out.println("✅ Seeded Mock Orders into MySQL");
         }
 
-        // Seed Elasticsearch VectorStore (Products)
+        // Seed Elasticsearch VectorStore (Products) using ETL Pipeline
         try {
-            List<Document> products = List.of(
-                    new Document("iPhone 15 Pro features a titanium design, A17 Pro chip, and a 48MP main camera. Price: $999.", 
-                            Map.of("name", "iPhone 15 Pro", "category", "Smartphone")),
-                    new Document("Samsung Galaxy S24 Ultra comes with Snapdragon 8 Gen 3, S-Pen, and a flat 6.8 inch display. Price: $1199.", 
-                            Map.of("name", "Samsung Galaxy S24 Ultra", "category", "Smartphone")),
-                    new Document("Sony WH-1000XM5 are industry-leading noise canceling headphones with 30-hour battery life. Price: $399.", 
-                            Map.of("name", "Sony WH-1000XM5", "category", "Audio"))
-            );
-            vectorStore.add(products);
-            System.out.println("✅ Seeded Mock Products into Elasticsearch VectorStore");
+            org.springframework.core.io.Resource resource = new org.springframework.core.io.FileSystemResource("src/main/resources/products-catalog.txt");
+            org.springframework.ai.reader.TextReader textReader = new org.springframework.ai.reader.TextReader(resource);
+            textReader.getCustomMetadata().put("source", "products-catalog");
+            
+            org.springframework.ai.transformer.splitter.TokenTextSplitter splitter = new org.springframework.ai.transformer.splitter.TokenTextSplitter();
+            List<Document> splitDocuments = splitter.apply(textReader.get());
+            
+            vectorStore.add(splitDocuments);
+            System.out.println("✅ Seeded Mock Products into Elasticsearch VectorStore using TextReader and TokenTextSplitter. Total Chunks: " + splitDocuments.size());
         } catch (Exception e) {
             System.err.println("❌ Failed to seed Elasticsearch VectorStore. Is ES running? " + e.getMessage());
         }

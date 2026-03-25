@@ -1,0 +1,29 @@
+Apple iPhone 15 Pro
+Brand: Apple
+Category: Smartphone
+Price: $999
+Description: The iPhone 15 Pro features a strong and lightweight titanium design, the powerful A17 Pro chip for next-level gaming performance, and a versatile 48MP main camera system. It also introduces the customizable Action button and switches to USB-C for faster data transfer.
+
+Samsung Galaxy S24 Ultra
+Brand: Samsung
+Category: Smartphone
+Price: $1199
+Description: Samsung's ultimate smartphone offering Snapdragon 8 Gen 3 optimization, a built-in S-Pen, and a flat 6.8 inch Dynamic AMOLED display. Its revolutionary Galaxy AI features live translation and advanced photo editing.
+
+Sony WH-1000XM5
+Brand: Sony
+Category: Audio
+Price: $399
+Description: Industry-leading noise canceling headphones with 30-hour battery life. They offer crystal clear hands-free calling and multipoint connection, allowing you to pair with two Bluetooth devices at once.
+
+Dyson V15 Detect
+Brand: Dyson
+Category: Home Appliance
+Price: $749
+Description: An intelligent cordless vacuum that reveals invisible dust using a precisely angled laser. The piezo sensor continuously sizes and counts dust particles, automatically increasing suction power when needed.
+
+Dell XPS 15
+Brand: Dell
+Category: Laptop
+Price: $1499
+Description: A premium 15.6-inch laptop crafted with machined aluminum and carbon fiber. Powered by Intel Core i7 processors and NVIDIA GeForce RTX graphics, delivering exceptional performance for creators and professionals.

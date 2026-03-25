@@ -8,12 +8,10 @@ public class RouterAgent {
 
     private final ChatClient chatClient;
 
-    public RouterAgent(ChatClient.Builder builder) {
+    public RouterAgent(ChatClient.Builder builder,
+                       @org.springframework.beans.factory.annotation.Value("classpath:prompts/router-agent.st") org.springframework.core.io.Resource systemPrompt) {
         this.chatClient = builder
-                .defaultSystem("You are an intent classifier. Your only job is to output exactly one word: " +
-                        "'SHOPPING' if the user is asking about or looking for a product to buy, " +
-                        "'ORDER' if the user is asking about an existing order's status or details, " +
-                        "or 'GENERAL' for greetings or other queries. Do not output anything else.")
+                .defaultSystem(systemPrompt)
                 .build();
     }
 

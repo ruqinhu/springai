@@ -12,11 +12,10 @@ public class ShoppingAgent {
 
     private final ChatClient chatClient;
 
-    public ShoppingAgent(ChatClient.Builder builder, VectorStore vectorStore, RedisChatMemory chatMemory) {
+    public ShoppingAgent(ChatClient.Builder builder, VectorStore vectorStore, RedisChatMemory chatMemory,
+                         @org.springframework.beans.factory.annotation.Value("classpath:prompts/shopping-agent.st") org.springframework.core.io.Resource systemPrompt) {
         this.chatClient = builder
-                .defaultSystem("You are a helpful and polite shopping assistant. " +
-                        "Use the provided product information to answer user questions. " +
-                        "If you don't know the answer, say you don't know.")
+                .defaultSystem(systemPrompt)
                 .defaultAdvisors(
                         new MessageChatMemoryAdvisor(chatMemory, "shopping", 10),
                         new QuestionAnswerAdvisor(vectorStore)

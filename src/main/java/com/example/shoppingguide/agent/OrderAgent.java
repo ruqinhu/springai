@@ -10,11 +10,10 @@ public class OrderAgent {
 
     private final ChatClient chatClient;
 
-    public OrderAgent(ChatClient.Builder builder, RedisChatMemory chatMemory) {
+    public OrderAgent(ChatClient.Builder builder, RedisChatMemory chatMemory,
+                      @org.springframework.beans.factory.annotation.Value("classpath:prompts/order-agent.st") org.springframework.core.io.Resource systemPrompt) {
         this.chatClient = builder
-                .defaultSystem("You are a helpful customer service agent. " +
-                        "You help users look up their order status using the provided tools. " +
-                        "Be polite and reassure the customer about their order.")
+                .defaultSystem(systemPrompt)
                 .defaultAdvisors(new MessageChatMemoryAdvisor(chatMemory, "order", 10))
                 .defaultFunctions("getOrderStatus")
                 .build();
