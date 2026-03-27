@@ -3,6 +3,8 @@ package com.example.shoppingguide.config;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.messages.*;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -15,6 +17,7 @@ import java.util.stream.Collectors;
 
 @Component
 public class RedisChatMemory implements ChatMemory {
+    private static final Logger log = LoggerFactory.getLogger(RedisChatMemory.class);
 
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
@@ -31,6 +34,7 @@ public class RedisChatMemory implements ChatMemory {
     @Override
     public void add(String conversationId, List<Message> messages) {
         String key = PREFIX + conversationId;
+        log.info("🧠 [RedisChatMemory] 写入记忆 - Key: {}, 新增消息数: {}", key, messages.size());
         List<Message> existing = get(conversationId, 100);
         existing.addAll(messages);
 
@@ -44,7 +48,9 @@ public class RedisChatMemory implements ChatMemory {
         try {
             String json = objectMapper.writeValueAsString(serializableMessages);
             redisTemplate.opsForValue().set(key, json, EXPIRE_HOURS, TimeUnit.HOURS);
+            log.info("🧠 [RedisChatMemory] 记忆已写入 Redis - Key: {}, 总消息数: {}", key, serializableMessages.size());
         } catch (JsonProcessingException e) {
+            log.error("🧠 [RedisChatMemory] 序列化记忆失败 - Key: {}", key, e);
             throw new RuntimeException("Error serializing chat memory", e);
         }
     }
@@ -54,6 +60,7 @@ public class RedisChatMemory implements ChatMemory {
         String key = PREFIX + conversationId;
         String json = redisTemplate.opsForValue().get(key);
         if (json == null) {
+            log.info("🧠 [RedisChatMemory] 读取记忆 - Key: {} 不存在，返回空列表", key);
             return new ArrayList<>();
         }
 
@@ -74,16 +81,21 @@ public class RedisChatMemory implements ChatMemory {
             }).collect(Collectors.toList());
 
             if (allMessages.size() > lastN) {
+                log.info("🧠 [RedisChatMemory] 读取记忆 - Key: {}, 总量: {}, 截取最近 {} 条", key, allMessages.size(), lastN);
                 return new ArrayList<>(allMessages.subList(allMessages.size() - lastN, allMessages.size()));
             }
+            log.info("🧠 [RedisChatMemory] 读取记忆 - Key: {}, 返回 {} 条消息", key, allMessages.size());
             return allMessages;
         } catch (JsonProcessingException e) {
+            log.error("🧠 [RedisChatMemory] 反序列化记忆失败 - Key: {}", key, e);
             return new ArrayList<>();
         }
     }
 
     @Override
     public void clear(String conversationId) {
-        redisTemplate.delete(PREFIX + conversationId);
+        String key = PREFIX + conversationId;
+        log.info("🧠 [RedisChatMemory] 清除记忆 - Key: {}", key);
+        redisTemplate.delete(key);
     }
 }

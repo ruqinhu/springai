@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Shopping Guide - 森系小清新</title>
+    <!-- Modern Typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+        
+        :root {
+            /* 森系小清新配色方案 */
+            --bg-gradient: linear-gradient(135deg, #e8f4ec 0%, #c1e1d2 100%);
+            --container-bg: rgba(255, 255, 255, 0.95);
+            --border-color: #d1e8df;
+            --text-primary: #2d3748;
+            --text-secondary: #718096;
+            --accent-color: #4ade80; /* 小清新绿 */
+            --accent-hover: #22c55e;
+            --user-msg: #dcfce7; /* 浅绿用户气泡 */
+            --bot-msg: #ffffff; /* 纯白机器气泡 */
+            --shadow-color: rgba(34, 197, 94, 0.08); /* 偏绿的柔和阴影 */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 主容器 */
+        .app-container {
+            width: 100%;
+            max-width: 950px;
+            height: 90vh;
+            background: var(--container-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border-color);
+            border-radius: 30px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px var(--shadow-color), 0 10px 15px -3px var(--shadow-color);
+        }
+
+        /* 顶部区块 */
+        .header {
+            padding: 20px 30px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .header h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #166534;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .header h1::before {
+            content: "🌿";
+            font-size: 1.6rem;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .input-control {
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            outline: none;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+        
+        select.input-control {
+            cursor: pointer;
+            padding-right: 30px;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23166534' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 10px center;
+            background-size: 1em;
+        }
+
+        .input-control:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.2);
+        }
+
+        /* 聊天滚动区 */
+        .chat-area {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            scroll-behavior: smooth;
+        }
+
+        .chat-area::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-area::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 10px;
+        }
+
+        .message {
+            display: flex;
+            flex-direction: column;
+            max-width: 80%;
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        .message.user {
+            align-self: flex-end;
+            align-items: flex-end;
+        }
+
+        .message.bot {
+            align-self: flex-start;
+        }
+
+        .bubble {
+            padding: 16px 24px;
+            border-radius: 24px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            word-wrap: break-word;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+        }
+
+        .message.user .bubble {
+            background: var(--user-msg);
+            color: #166534;
+            border-bottom-right-radius: 6px;
+        }
+
+        .message.bot .bubble {
+            background: var(--bot-msg);
+            border: 1px solid var(--border-color);
+            border-bottom-left-radius: 6px;
+            color: var(--text-primary);
+        }
+
+        .meta {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            display: flex;
+            gap: 10px;
+            background: #f1f5f9;
+            padding: 4px 10px;
+            border-radius: 12px;
+            width: fit-content;
+        }
+
+        /* 卡片内容渲染（适用偏好分析结果） */
+        .preference-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .preference-card strong {
+            color: #166534;
+        }
+        
+        .gen-image {
+            max-width: 100%;
+            border-radius: 16px;
+            margin-top: 10px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        /* 输入区 */
+        .input-area {
+            padding: 24px 30px;
+            background: var(--bot-msg);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 15px;
+        }
+
+        .input-box {
+            flex: 1;
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 0 24px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            outline: none;
+            height: 60px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .input-box:focus {
+            border-color: var(--accent-color);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.2);
+        }
+
+        .send-btn {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 24px;
+            width: 60px;
+            height: 60px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(74, 222, 128, 0.4);
+        }
+
+        .send-btn:hover {
+            background: var(--accent-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(74, 222, 128, 0.5);
+        }
+
+        .send-btn:active {
+            transform: translateY(0);
+        }
+
+        .send-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+            margin-left: 2px;
+        }
+
+        /* 正在输入动画 */
+        .typing-indicator {
+            display: none;
+            align-self: flex-start;
+            background: var(--bot-msg);
+            padding: 16px 24px;
+            border-radius: 24px;
+            border-bottom-left-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        .dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #cbd5e1;
+            margin-right: 6px;
+            animation: bounce 1.4s infinite ease-in-out both;
+        }
+
+        .dot:nth-child(1) { animation-delay: -0.32s; }
+        .dot:nth-child(2) { animation-delay: -0.16s; }
+        .dot:nth-child(3) { margin-right: 0; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); background: var(--accent-color); }
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <header class="header">
+        <h1>购物手记</h1>
+        <div class="controls">
+            <input type="text" id="sessionId" class="input-control" placeholder="会话 ID (例如 user-123)" value="user-123" style="width: 160px;">
+            <select id="apiMode" class="input-control">
+                <option value="chat" selected>🌾 智能导购 (标准模式, 支持路由)</option>
+                <option value="analyze">🔍 分析偏好 (JSON结果输出)</option>
+                <option value="design">🎨 生成设计图 (产品渲染预览)</option>
+                <option value="knowledge">🗄️ 企业知识库 (上传资料 & 专有问答)</option>
+            </select>
+        </div>
+    </header>
+
+    <div class="chat-area" id="chatArea">
+        <div class="message bot">
+            <div class="bubble">欢迎深呼吸大自然的空气！我是您的森系购物向导。<br><br>你可以通过右上角的下拉框切换模式来体验我不同的能力：<br>👉 <b>智能导购</b>：完整的订单查询与推荐（需一定处理时间）。<br>👉 <b>流式打字机</b>：享受即刻回复的丝滑速度。<br>👉 <b>偏好分析</b>：告诉我你想买啥，我给你提取成清晰的标签。<br>👉 <b>生成设计图</b>：一句话帮你画出你梦中情鞋/电脑的图。</div>
+        </div>
+    </div>
+    
+    <div class="typing-indicator" id="typingIndicator">
+        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    </div>
+
+    <div class="input-area" id="inputArea">
+        <label for="fileInput" id="uploadBtn" class="upload-btn" style="display: none; cursor: pointer; padding-right: 15px;" title="上传资料补充到知识库">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="#6ba78e">
+                <path d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5a2.5 2.5 0 0 1 5 0v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5a2.5 2.5 0 0 0 5 0V5c0-1.38-1.12-2.5-2.5-2.5S8 3.62 8 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/>
+            </svg>
+        </label>
+        <input type="text" id="messageInput" class="input-box" placeholder="在这里输入你感兴趣的商品，或者提出设计要求..." autocomplete="off" onkeypress="handleEnter(event)">
+        <input type="file" id="fileInput" class="input-box" multiple style="display: none; padding: 15px;" onchange="handleFileUpload()">
+        <button class="send-btn" onclick="sendMessage()">
+            <svg viewBox="0 0 24 24">
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+            </svg>
+        </button>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+    const chatArea = document.getElementById('chatArea');
+    const messageInput = document.getElementById('messageInput');
+    const fileInput = document.getElementById('fileInput');
+    const sessionIdInput = document.getElementById('sessionId');
+    const apiModeSelect = document.getElementById('apiMode');
+    const typingIndicator = document.getElementById('typingIndicator');
+
+    // 处理模式切换
+    apiModeSelect.addEventListener('change', function() {
+        const uploadBtn = document.getElementById('uploadBtn');
+        if (this.value === 'knowledge') {
+            messageInput.placeholder = "向知识库提问，或点击左侧 📎 上传新资料...";
+            uploadBtn.style.display = 'block';
+        } else {
+            messageInput.placeholder = "在这里输入你感兴趣的商品，或者提出设计要求...";
+            uploadBtn.style.display = 'none';
+        }
+    });
+
+    // 处理文件上传逻辑
+    async function handleFileUpload() {
+        const files = fileInput.files;
+        if (files.length === 0) return;
+        
+        const fileNames = Array.from(files).map(f => f.name).join(', ');
+        addMessage('user', `请帮我上传知识库补充资料：${fileNames}`, '📂 [上传指令]');
+        
+        const formData = new FormData();
+        for (let i = 0; i < files.length; i++) {
+            formData.append('files', files[i]);
+        }
+        
+        fileInput.disabled = true;
+        typingIndicator.style.display = 'block';
+        chatArea.appendChild(typingIndicator);
+        scrollToBottom();
+        
+        try {
+            const response = await fetch('/api/knowledge/upload', {
+                method: 'POST',
+                body: formData
+            });
+            typingIndicator.style.display = 'none';
+            if (!response.ok) throw new Error('文件上传失败');
+            
+            const data = await response.json();
+            let resultHtml = `✅ <b>知识库导入成功！</b><br>共接收 ${data.totalFiles} 个文件，成功向量化划分为 ${data.totalChunks} 个分片。<br>`;
+            if (data.success && data.success.length > 0) resultHtml += `<br><b>成功文件：</b><br>${data.success.join('<br>')}`;
+            if (data.failed && data.failed.length > 0) resultHtml += `<br><br><b>❌失败文件：</b><br>${data.failed.join('<br>')}`;
+            
+            addMessage('bot', resultHtml, '🗄️ [企业知识库写入]');
+        } catch (error) {
+            typingIndicator.style.display = 'none';
+            addMessage('bot', `⚠️ 发生错误: ${error.message}`);
+        } finally {
+            fileInput.disabled = false;
+            fileInput.value = ''; // 清空选择
+            scrollToBottom();
+        }
+    }
+
+    function handleEnter(e) {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    }
+
+    function scrollToBottom() {
+        chatArea.scrollTop = chatArea.scrollHeight;
+    }
+
+    function addMessage(sender, htmlContent, intent = null) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${sender}`;
+        
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        bubble.innerHTML = htmlContent;
+        
+        msgDiv.appendChild(bubble);
+
+        if (intent && sender === 'bot') {
+            const meta = document.createElement('div');
+            meta.className = 'meta';
+            meta.innerText = intent;
+            msgDiv.appendChild(meta);
+        }
+
+        chatArea.appendChild(msgDiv);
+        scrollToBottom();
+        return bubble;
+    }
+    
+    // 生成偏好分析卡片的HTML
+    function formatPreferenceCard(pref) {
+        return `
+            <b>已从您的描述中提取出以下商品偏好特征：</b>
+            <div class="preference-card">
+                <div><strong>分类 (Category):</strong> ${pref.category || '未指定'}</div>
+                <div><strong>最低价格 (Min Price):</strong> ${pref.minPrice !== null ? '￥' + pref.minPrice : '不限'}</div>
+                <div><strong>最高价格 (Max Price):</strong> ${pref.maxPrice !== null ? '￥' + pref.maxPrice : '不限'}</div>
+                <div><strong>目标特征 (Key Features):</strong> ${pref.keyFeatures ? pref.keyFeatures.join(', ') : '无'}</div>
+                <div><strong>品牌偏好 (Brand):</strong> ${pref.brandPreference || '无'}</div>
+                <hr style="margin: 10px 0; border: none; border-top: 1px dashed #d1e8df;">
+                <div><strong>AI 一句话总结:</strong> ${pref.summary || ''}</div>
+            </div>`;
+    }
+
+    async function sendMessage() {
+        const mode = apiModeSelect.value;
+        const sessionId = sessionIdInput.value.trim() || 'default-session';
+
+        // 常规文本提问模式
+        const text = messageInput.value.trim();
+        if (!text) return;
+
+        // Add user message
+        addMessage('user', text);
+        messageInput.value = '';
+        messageInput.disabled = true;
+
+        typingIndicator.style.display = 'block';
+        chatArea.appendChild(typingIndicator); // Move to bottom
+        scrollToBottom();
+
+        try {
+            if (mode === 'knowledge') {
+                // 流式知识库大模型辅助问答模式
+                const response = await fetch('/api/knowledge/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId, message: text })
+                });
+
+                typingIndicator.style.display = 'none';
+                if (!response.ok) throw new Error('流式请求发生错误');
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder('utf-8');
+                const bubbleElement = addMessage('bot', '');
+                let fullText = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    const chunk = decoder.decode(value, { stream: true });
+                    const lines = chunk.split('\n');
+                    
+                    for (const line of lines) {
+                        if (line.startsWith('data:')) {
+                            let dataStr = line.substring(5);
+                            if (dataStr.startsWith(' ')) dataStr = dataStr.substring(1);
+                            fullText += dataStr;
+                            
+                            // 尝试使用 marked 解析如果报错降级回普通 replace
+                            try {
+                                bubbleElement.innerHTML = marked.parse(fullText);
+                            } catch(e) {
+                                bubbleElement.innerHTML = fullText.replace(/\n/g, '<br>');
+                            }
+                            scrollToBottom();
+                        }
+                    }
+                }
+                
+                const meta = document.createElement('div');
+                meta.className = 'meta';
+                meta.innerText = `🗄️ [知识库问答 - AI增强总结]`;
+                bubbleElement.parentElement.appendChild(meta);
+
+            } else if (mode === 'stream') {
+                // 流式模式 /api/chat/stream
+                const response = await fetch('/api/chat/stream', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId, message: text })
+                });
+
+                typingIndicator.style.display = 'none';
+                if (!response.ok) throw new Error('流式请求发生错误');
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder('utf-8');
+                const bubbleElement = addMessage('bot', '');
+                let fullText = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    const chunk = decoder.decode(value, { stream: true });
+                    const lines = chunk.split('\n');
+                    
+                    for (const line of lines) {
+                        if (line.startsWith('data:')) {
+                            let dataStr = line.substring(5);
+                            if (dataStr.startsWith(' ')) dataStr = dataStr.substring(1);
+                            fullText += dataStr;
+                            bubbleElement.innerHTML = fullText.replace(/\n/g, '<br>');
+                            scrollToBottom();
+                        }
+                    }
+                }
+                
+                const meta = document.createElement('div');
+                meta.className = 'meta';
+                meta.innerText = `🌊 [打字机输出完毕]`;
+                bubbleElement.parentElement.appendChild(meta);
+
+            } else if (mode === 'analyze') {
+                // 偏好分析模式 /api/chat/analyze-preference
+                const response = await fetch('/api/chat/analyze-preference', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ description: text })
+                });
+                typingIndicator.style.display = 'none';
+                if (!response.ok) throw new Error('分析请求发生错误');
+                
+                const data = await response.json();
+                addMessage('bot', formatPreferenceCard(data), '🔍 [结构化意图抽取]');
+                
+            } else if (mode === 'design') {
+                // 画图模式 /api/chat/design
+                const response = await fetch('/api/chat/design', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ description: text })
+                });
+                typingIndicator.style.display = 'none';
+                if (!response.ok) throw new Error('画图请求发生错误');
+                
+                const data = await response.json();
+                if (data.imageUrl) {
+                    const imgHtml = `为您生成的设计图如下：<br><img src="${data.imageUrl}" class="gen-image" alt="设计图" onload="scrollToBottom()">`;
+                    addMessage('bot', imgHtml, '🎨 [商品设计绘制]');
+                } else {
+                    throw new Error('未能获取到图片URL');
+                }
+                
+            } else {
+                // 标准导购模式 (/api/chat) - 现在也是流式输出
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId, message: text })
+                });
+
+                typingIndicator.style.display = 'none';
+                if (!response.ok) throw new Error('请求发生错误');
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder('utf-8');
+                const bubbleElement = addMessage('bot', '');
+                let fullText = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    const chunk = decoder.decode(value, { stream: true });
+                    const lines = chunk.split('\n');
+                    
+                    for (const line of lines) {
+                        if (line.startsWith('data:')) {
+                            let dataStr = line.substring(5);
+                            if (dataStr.startsWith(' ')) dataStr = dataStr.substring(1);
+                            fullText += dataStr;
+                            bubbleElement.innerHTML = fullText.replace(/\n/g, '<br>');
+                            scrollToBottom();
+                        }
+                    }
+                }
+                
+                const meta = document.createElement('div');
+                meta.className = 'meta';
+                meta.innerText = `🌾 [智能导购 - 路由 + 流式输出]`;
+                bubbleElement.parentElement.appendChild(meta);
+            }
+        } catch (error) {
+            typingIndicator.style.display = 'none';
+            addMessage('bot', `⚠️ 发生错误: ${error.message}`);
+        } finally {
+            messageInput.disabled = false;
+            messageInput.focus();
+            scrollToBottom();
+        }
+    }
+</script>
+</body>
+</html>

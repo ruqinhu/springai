@@ -7,7 +7,7 @@ Extract the following fields if possible:
 - maxPrice: The maximum budget mentioned
 - keyFeatures: A list of specific features they are looking for (e.g., ["noise canceling", "long battery life"])
 - brandPreference: Any specific brand they mentioned
-- summary: A one-sentence summary of what they are looking for
+- summary: A one-sentence summary of what they are looking for (IN CHINESE)
 
 If a value is not mentioned, use null for that field.
 
