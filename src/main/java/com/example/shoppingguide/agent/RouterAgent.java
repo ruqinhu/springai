@@ -33,12 +33,21 @@ public class RouterAgent {
                 .content();
 
         log.info("🤖 [RouterAgent] 大模型原始返回: [{}]", rawOutput);
-
-        // 容错解析：去除引号、花括号、空白等干扰字符
-        String cleaned = rawOutput.trim()
-                .replaceAll("[\"'{}\\[\\]`]", "")
-                .trim()
-                .toUpperCase();
+        
+        // 使用正则提取 <category> 标签中的内容 (支持单行或跨行)
+        String cleaned = "UNKNOWN";
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("<category>(.*?)</category>", java.util.regex.Pattern.DOTALL);
+        java.util.regex.Matcher matcher = pattern.matcher(rawOutput);
+        
+        if (matcher.find()) {
+            cleaned = matcher.group(1).trim().toUpperCase();
+        } else {
+            // 备选方案：如果模型没有生成标签，尝试之前的降级清理逻辑
+            cleaned = rawOutput.trim()
+                    .replaceAll("[\"'{}\\[\\]`]", "")
+                    .trim()
+                    .toUpperCase();
+        }
 
         try {
             IntentType intent = IntentType.valueOf(cleaned);

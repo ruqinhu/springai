@@ -170,6 +170,32 @@
             color: var(--text-primary);
         }
 
+        /* Markdown 增强样式 */
+        .bubble h1, .bubble h2, .bubble h3 { font-weight: 700; margin: 12px 0 8px 0; color: #166534; }
+        .bubble h1 { font-size: 1.25rem; }
+        .bubble h2 { font-size: 1.15rem; }
+        .bubble p { margin-bottom: 10px; }
+        .bubble ul, .bubble ol { margin: 8px 0 12px 25px; }
+        .bubble li { margin-bottom: 6px; }
+        .bubble code { 
+            background: #f1f5f9; 
+            padding: 2px 6px; 
+            border-radius: 6px; 
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9em;
+            color: #ef4444;
+        }
+        .bubble pre {
+            background: #1e293b;
+            color: #f8fafc;
+            padding: 15px;
+            border-radius: 12px;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+        .bubble hr { border: none; border-top: 1px solid #e2e8f0; margin: 15px 0; }
+        .bubble blockquote { border-left: 4px solid var(--accent-color); padding-left: 15px; color: #64748b; font-style: italic; }
+
         .meta {
             font-size: 0.75rem;
             color: var(--text-secondary);
@@ -352,6 +378,30 @@
     const apiModeSelect = document.getElementById('apiMode');
     const typingIndicator = document.getElementById('typingIndicator');
 
+    // 配置 Marked 选项
+    marked.setOptions({
+        breaks: true,   // 支持单换行符
+        gfm: true,      // 开启 GitHub Flavored Markdown
+        headerIds: true,
+        mangle: false
+    });
+
+    // 统一渲染函数
+    function renderContent(element, markdownText) {
+        try {
+            // 前端容错拦截：确保标题符号 (#) 后面一定有空格，处理 AI 连写问题
+            let sanitized = markdownText
+                .replace(/^(#+)([^\s#])/gm, '$1 $2') // 修复 ###✅ -> ### ✅
+                .replace(/([^\n])\n(###|---)/g, '$1\n\n$2') // 确保标题/分隔线前至少有两个换行
+                .replace(/^-([^\s\s])/gm, '- $1');  // 修复 -🚫 -> - 🚫
+
+            element.innerHTML = marked.parse(sanitized);
+        } catch (e) {
+            console.error('Markdown parse error:', e);
+            element.innerHTML = markdownText.replace(/\n/g, '<br>');
+        }
+    }
+
     // 处理模式切换
     apiModeSelect.addEventListener('change', function() {
         const uploadBtn = document.getElementById('uploadBtn');
@@ -498,14 +548,9 @@
                         if (line.startsWith('data:')) {
                             let dataStr = line.substring(5);
                             if (dataStr.startsWith(' ')) dataStr = dataStr.substring(1);
-                            fullText += dataStr;
-                            
-                            // 尝试使用 marked 解析如果报错降级回普通 replace
-                            try {
-                                bubbleElement.innerHTML = marked.parse(fullText);
-                            } catch(e) {
-                                bubbleElement.innerHTML = fullText.replace(/\n/g, '<br>');
-                            }
+                            // 关键修复：处理某些 SSE 实现中空 data 代表换行，或者直接累加
+                            fullText += dataStr === "" ? "\n" : dataStr;
+                            renderContent(bubbleElement, fullText);
                             scrollToBottom();
                         }
                     }
@@ -543,8 +588,9 @@
                         if (line.startsWith('data:')) {
                             let dataStr = line.substring(5);
                             if (dataStr.startsWith(' ')) dataStr = dataStr.substring(1);
-                            fullText += dataStr;
-                            bubbleElement.innerHTML = fullText.replace(/\n/g, '<br>');
+                            // 修正 SSE 数据处理逻辑，将空 data 映射为 \n
+                            fullText += dataStr === "" ? "\n" : dataStr;
+                            renderContent(bubbleElement, fullText);
                             scrollToBottom();
                         }
                     }
@@ -613,8 +659,9 @@
                         if (line.startsWith('data:')) {
                             let dataStr = line.substring(5);
                             if (dataStr.startsWith(' ')) dataStr = dataStr.substring(1);
-                            fullText += dataStr;
-                            bubbleElement.innerHTML = fullText.replace(/\n/g, '<br>');
+                            // 修正 SSE 数据处理逻辑，将空 data 映射为 \n
+                            fullText += dataStr === "" ? "\n" : dataStr;
+                            renderContent(bubbleElement, fullText);
                             scrollToBottom();
                         }
                     }
