@@ -59,13 +59,52 @@ graph TD
 > [!IMPORTANT]
 > **架构安全性**：本项目坚持“环境感知、物理隔离”原则。通过双 Bean 声明实现的 VectorStore 隔离是企业化落地的核心壁垒，从代码层面杜绝了跨库检索风险。
 
+
+## 5. Harness Engineering (驭缰工程)
+
+本项目引入了 **Harness Engineering** 方法论——将仓库打造为 AI Agent 的"操作系统"，通过编码化约束取代口头约定，让 Agent 在可控的缰绳内高效奔跑。
+
+### 📁 工程目录结构
+```
+springai/
+├── AGENTS.md                    ← Agent 导航地图（~40行，地图而非手册）
+├── docs/
+│   ├── ARCHITECTURE.md          ← 架构层级与双向量隔离设计
+│   └── DEVELOPMENT.md           ← 构建、测试、环境指南
+├── scripts/
+│   └── validate.sh              ← 统一验证管道 (build → lint-arch → test)
+├── harness/
+│   ├── tasks/                   ← 任务状态和检查点
+│   ├── trace/                   ← 执行轨迹和失败记录
+│   └── memory/                  ← 经验教训存储
+└── src/test/.../ArchitectureConstraintsTest.java  ← ArchUnit 架构防腐测试
+```
+
+### 🔗 三层防护体系
+| 层级 | 机制 | 说明 |
+| :--- | :--- | :--- |
+| **信息层** | `AGENTS.md` + `docs/` | Agent 启动时读取导航地图，按需加载架构文档，不浪费上下文窗口。 |
+| **约束层** | `ArchUnit` + `validate.sh` | 将 Layer 0-3 分层规则编码为自动化测试，违规即报错，CI 一票否决。 |
+| **状态层** | `harness/` 目录群 | 任务检查点、失败轨迹和经验教训的持久化存储，跨会话传递知识。 |
+
+### 🔄 Agent 工作流闭环
+```
+Agent 启动 → 读 AGENTS.md → 制定计划 → 人类批准 → 写代码
+    ↓                                                   ↓
+经验沉淀 ← 完成验证 ← 跑 validate.sh ← 存检查点 ← 预验证架构
+(memory/)   (trace/)                    (tasks/)
+```
+
 # 更新日志
 
-### 2026-04-04 | 前端渲染优化与意图识别增强
-- **Markdown 渲染鲁棒性增强**：前端引入 `renderContent` 逻辑及正则清洗，自动修正模型输出中常见的 Markdown 格式问题（如标题缺失空格）。
-- **SSE 流式换行修复**：优化了 SSE 数据流处理逻辑，通过映射空 Data 帧为 `\n`，完美解决了流式响应中的段落合并与换行丢失问题。
-- **意图分类指令精细化**：重构 `RouterAgent` 提示词，确立了 SHOPPING/ORDER/GENERAL 三大核心意图边界，并强化了 XML 结构化输出规范。
-- **Prompt 结构化演进**：持续优化 `.st` 模板中的标签嵌套逻辑，提升了模型对复杂指令的依从性。
+### 2026-04-04 | Harness Engineering 驭缰工程落地 & 前端优化
+- **Harness Engineering 全套基础设施**：引入 `AGENTS.md` 导航地图、`docs/` 架构文档层、`ArchUnit` 机械化约束层以及 `harness/` 状态记忆层，将项目升级为 AI Agent 的"操作系统"。
+- **ArchUnit 架构防腐测试**：通过 `ArchitectureConstraintsTest` 强制执行 Layer 0-3 分层规则，违规代码在编译阶段即被拦截。
+- **统一验证管道 `validate.sh`**：建立 `build → lint-arch → test` 自动化流水线，确保每次变更通过完整防腐检验。
+- **Agent 工作流规范化**：在 `AGENTS.md` 中定义任务登记 → 故障追溯 → 经验沉淀的强制闭环，保障跨会话知识传递。
+- **Markdown 渲染鲁棒性增强**：前端引入 `renderContent` 逻辑及正则清洗，自动修正模型输出中常见的 Markdown 格式问题。
+- **SSE 流式换行修复**：优化 SSE 数据流处理逻辑，解决流式响应中的段落合并与换行丢失问题。
+- **意图分类指令精细化**：重构 `RouterAgent` 提示词，确立了 SHOPPING/ORDER/GENERAL 三大核心意图边界。
 
 ### 2026-04-02 | 提示词工程深度优化 (Claude 风格)
 - **结构化重构 (XML Tagging)**：将所有 `.st` 模板转换为 XML 结构化格式，极大提升了模型对指令边界的识别能力。
